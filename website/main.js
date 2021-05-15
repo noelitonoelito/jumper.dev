@@ -62,8 +62,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function registerServiceWorker() {
     navigator?.serviceWorker?.register(
-      "/jumper/serviceWorker.js",
-      { scope: "/jumper/" }
+      "/jumper.dev/serviceWorker.js",
+      { scope: "/jumper.dev/" }
     )
   }
 
@@ -129,9 +129,6 @@ document.addEventListener("DOMContentLoaded", () => {
       this.scoreBoard = document.getElementById("scoreBoard")
       this.gameOptions = document.getElementById("gameOptions")
       this.gameOver = document.getElementById("gameOver")
-      this.menuSound = document.getElementById("menuSound")
-      this.music = document.getElementById("backgroundMusic")
-      this.gameOverSound = document.getElementById("gameOverSound")
 
       this._watchWindowResize()
       setTimeout(this._windowResized, 10)
@@ -234,17 +231,20 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     _initializeSounds() {
+      this.music = new Audio("sounds/background-music.mp3")
       this.music.volume = musicVolume * mainVolume
       this.music.addEventListener("ended", () => {
         this.music.currentTime = 0
         this.music.play()
       }, false)
 
+      this.gameOverSound = new Audio("sounds/game-over.mp3")
       this.gameOverSound.volume = gameOverSoundVolume * mainVolume
       this.gameOverSound.addEventListener("ended", () => {
         this.gameOverSound.currentTime = 0
       }, false)
 
+      this.menuSound = new Audio("sounds/click.mp3")
       this.menuSound.volume = menuSoundVolume * mainVolume
       this.menuSound.addEventListener("ended", () => {
         this.menuSound.currentTime = 0
@@ -419,7 +419,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   class Jumper {
     element
-    jumpSound
+    jumpSounds = []
     width = 60
     height = 85
     left = 50
@@ -569,8 +569,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     _initializeSounds() {
-      this.jumpSound = new Audio(`sounds/jump-${randomInt(1, 4)}.mp3`)
-      this.jumpSound.volume = jumpSoundVolume * mainVolume
+      [1, 2, 3, 4].forEach((i) => {
+        const sound = new Audio(`sounds/jump-${i}.mp3`)
+        sound.volume = jumpSoundVolume * mainVolume
+        this.jumpSounds.push(sound)
+      })
     }
 
     _jump() {
@@ -581,9 +584,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     _playJumpSound() {
-      this.jumpSound.src = `sounds/jump-${randomInt(1, 4)}.mp3`
-      this.jumpSound.currentTime = 0
-      this.jumpSound.play()
+      const sound = this.jumpSounds[randomInt(0, 3)]
+      sound.currentTime = 0
+      sound.play()
     }
 
     _updateContainerBox() {
@@ -592,9 +595,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     _stopJumpSound() {
-      if (this.jumpSound.ended) { return }
-      this.jumpSound.pause()
-      this.jumpSound.currentTime = 0
+      this.jumpSounds.forEach((sound) => {
+        if (sound.ended) { return }
+        sound.pause()
+        sound.currentTime = 0
+      })
     }
   }
 

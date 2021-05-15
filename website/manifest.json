@@ -1,12 +1,12 @@
 {
-  "name": "jumper",
-  "short_name": "jumper",
+  "name": "jumper.dev",
+  "short_name": "jumper.dev",
   "start_url": ".",
   "background_color": "#000000",
   "theme_color": "#000000",
   "display": "fullscreen",
   "orientation": "portrait",
-  "scope": "/jumper/",
+  "scope": "/jumper.dev/",
   "categories": [
     "entertainment"
   ],

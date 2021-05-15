@@ -1,9 +1,9 @@
 // identifier for this app.
 //   this needs to be consistent across every cache update.
-const APP_PREFIX = "jumper"
+const APP_PREFIX = "jumper.dev"
 // version of the off-line cache.
 //   change this value every time you want to update cache.
-const VERSION = "v0.21.0"
+const VERSION = "v0.22.0"
 const CACHE_NAME = `${APP_PREFIX}_${VERSION}`
 const URLS_TO_CACHE = [
   // use "/" instead of "/index.html"
