@@ -52,7 +52,7 @@ function cacheResources(event) {
 }
 
 function deleteExpiredCache(event) {
-  event.waitUntil(() => {
+  event.waitUntil(async () => {
     // `cacheKeys` contains all cache names under your subdomain.
     const cacheKeys = await caches.keys()
     const cacheToKeep = cacheKeys.filter((key) => key.indexOf(`${APP_PREFIX}_`))
