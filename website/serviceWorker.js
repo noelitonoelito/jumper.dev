@@ -67,7 +67,7 @@ function deleteExpiredCache(event) {
 }
 
 // https://samdutton.github.io/samples/service-worker/prefetch-video/
-function fromCacheElseFetch(event) {
+async function fromCacheElseFetch(event) {
   // only handle "GET" requests
   if (event.request.method !== "GET") { return }
 
