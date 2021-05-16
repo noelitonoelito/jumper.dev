@@ -67,78 +67,80 @@ function deleteExpiredCache(event) {
 }
 
 // https://samdutton.github.io/samples/service-worker/prefetch-video/
-async function fromCacheElseFetch(event) {
-  // only handle "GET" requests
-  if (event.request.method !== "GET") { return }
+function fromCacheElseFetch(event) {
+  event.waitUntil(async () => {
+    // only handle "GET" requests
+    if (event.request.method !== "GET") { return }
 
-  if (event.request.headers.get("range")) {
-    var startingPosition =
-      Number(/^bytes\=(\d+)\-$/g.exec(event.request.headers.get("range"))[1])
-    console.log(
-      "Handling Range request for:",
-      event.request.url,
-      ", starting position:",
-      startingPosition
-    )
+    if (event.request.headers.get("range")) {
+      var startingPosition =
+        Number(/^bytes\=(\d+)\-$/g.exec(event.request.headers.get("range"))[1])
+      console.log(
+        "Handling Range request for:",
+        event.request.url,
+        ", starting position:",
+        startingPosition
+      )
 
-    const cache = await caches.open(CACHE_NAME)
-    const cacheResponse = await cache.match(event.request.url)
-    let arrayBuffer
+      const cache = await caches.open(CACHE_NAME)
+      const cacheResponse = await cache.match(event.request.url)
+      let arrayBuffer
 
-    if (cacheResponse) {
-      console.log("-- found file in cache")
-      arrayBuffer = await cacheResponse.arrayBuffer()
-    } else {
-      console.log("-- file not in cache, fetching...")
-      arrayBuffer = (await fetch(event.request)).arrayBuffer()
-    }
-
-    console.log("-- responding")
-
-    event.respondWith(new Response(
-      arrayBuffer.slice(startingPosition),
-      {
-        status: PARTIAL_CONTENT,
-        statusText: "Partial Content",
-        headers: [
-          [
-            "Content-Range",
-            "bytes " + startingPosition + "-" +
-            (arrayBuffer.byteLength - 1) + "/" + arrayBuffer.byteLength
-          ]
-        ]
+      if (cacheResponse) {
+        console.log("-- found file in cache")
+        arrayBuffer = await cacheResponse.arrayBuffer()
+      } else {
+        console.log("-- file not in cache, fetching...")
+        arrayBuffer = (await fetch(event.request)).arrayBuffer()
       }
-    ))
-  } else {
-    console.log("Handling request for:", event.request.url)
 
-
-    // caches.match() will look for a cache entry in all of the caches
-    //   available to the service worker.
-    // It's an alternative to first opening a specific named cache
-    //   and then matching on that.
-    const cacheResponse = await caches.match(event.request)
-
-    if (cacheResponse) {
-      console.log("-- found file in cache, responding...")
-      event.respondWith(cacheResponse)
-    }
-
-    console.log("-- file not in cache, fetching...")
-
-    try {
-      // event.request will always have the proper mode set
-      //   ("cors", "no-cors", etc.) so we don't have to hard code
-      //   "no-cors" like we do when fetch()ing in the install handler.
-      const response = await fetch(event.request)
       console.log("-- responding")
-      event.respondWith(response)
-    } catch (error) {
-      // 404 errors will NOT trigger an exception
-      console.error("--- fetching failed:", error)
-      throw error
+
+      event.respondWith(new Response(
+        arrayBuffer.slice(startingPosition),
+        {
+          status: PARTIAL_CONTENT,
+          statusText: "Partial Content",
+          headers: [
+            [
+              "Content-Range",
+              "bytes " + startingPosition + "-" +
+              (arrayBuffer.byteLength - 1) + "/" + arrayBuffer.byteLength
+            ]
+          ]
+        }
+      ))
+    } else {
+      console.log("Handling request for:", event.request.url)
+
+
+      // caches.match() will look for a cache entry in all of the caches
+      //   available to the service worker.
+      // It's an alternative to first opening a specific named cache
+      //   and then matching on that.
+      const cacheResponse = await caches.match(event.request)
+
+      if (cacheResponse) {
+        console.log("-- found file in cache, responding...")
+        event.respondWith(cacheResponse)
+      }
+
+      console.log("-- file not in cache, fetching...")
+
+      try {
+        // event.request will always have the proper mode set
+        //   ("cors", "no-cors", etc.) so we don't have to hard code
+        //   "no-cors" like we do when fetch()ing in the install handler.
+        const response = await fetch(event.request)
+        console.log("-- responding")
+        event.respondWith(response)
+      } catch (error) {
+        // 404 errors will NOT trigger an exception
+        console.error("--- fetching failed:", error)
+        throw error
+      }
     }
-  }
+  })
 }
 
 self.addEventListener("install", cacheResources)
