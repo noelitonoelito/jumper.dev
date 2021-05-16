@@ -85,7 +85,7 @@ function fromCacheElseFetch(event) {
 
     event.respondWith(
       caches.open(CACHE_NAME)
-        .then((cache) => cache.match(event.request))
+        .then((cache) => cache.match(event.request.url))
         .then(async (res) => {
           if (res) { return res.arrayBuffer() }
           return fetch(event.request)
@@ -117,7 +117,7 @@ function fromCacheElseFetch(event) {
 
     event.respondWith(
       caches.open(CACHE_NAME)
-        .then((cache) => cache.match(event.request))
+        .then((cache) => cache.match(event.request.url))
         .then((response) => {
           if (response) {
             console.log("Found response in cache:", response)
