@@ -44,102 +44,90 @@ const URLS_TO_CACHE = [
 const PARTIAL_CONTENT = 206
 
 function cacheResources(event) {
-  event.waitUntil(async () => {
-    const cache = await caches.open(CACHE_NAME)
-    console.log("Installing cache:", CACHE_NAME)
-    return cache.addAll(URLS_TO_CACHE)
-  })
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      console.log("installing cache: " + CACHE_NAME)
+      return cache.addAll(URLS_TO_CACHE)
+    })
+  )
 }
 
 function deleteExpiredCache(event) {
-  event.waitUntil(async () => {
-    // `cacheKeys` contains all cache names under your subdomain.
-    const cacheKeys = await caches.keys()
-    const cacheToKeep = cacheKeys.filter((key) => key.indexOf(`${APP_PREFIX}_`))
-    cacheToKeep.push(CACHE_NAME)
+  event.waitUntil(
+    caches.keys().then((keys) => {
+      // `keys` contains all cache names under your subdomain.
+      const cacheToKeep = keys.filter((key) => key.indexOf(`${APP_PREFIX}_`))
+      cacheToKeep.push(CACHE_NAME)
 
-    return Promise.all(cacheKeys.map((key) => {
-      if (cacheToKeep.includes(key)) { return }
-      console.log("Deleting cache: " + key)
-      return caches.delete(key)
-    }))
-  })
+      return Promise.all(keys.map((key) => {
+        if (cacheToKeep.includes(key)) { return }
+        console.log("deleting cache: " + key)
+        return caches.delete(key)
+      }))
+    })
+  )
 }
 
 // https://samdutton.github.io/samples/service-worker/prefetch-video/
 function fromCacheElseFetch(event) {
-  console.log("Handling fetch event for", event.request.url)
+  console.log('Handling fetch event for', event.request.url);
 
-  // Browsers default to requesting media like MP3 and MP4 in chunks so that
-  //   large media files can begin playing as soon as possible while the rest of
-  //   the file continues downloading.
-  if (event.request.headers.get("range")) {
-    var startingPosition =
-      Number(/^bytes\=(\d+)\-$/g.exec(event.request.headers.get("range"))[1])
-    console.log(
-      "Range request for",
-      event.request.url,
-      ", starting position:",
-      startingPosition
-    )
-
+  if (event.request.headers.get('range')) {
+    var pos =
+    Number(/^bytes\=(\d+)\-$/g.exec(event.request.headers.get('range'))[1]);
+    console.log('Range request for', event.request.url,
+      ', starting position:', pos);
     event.respondWith(
-      caches.open(CACHE_NAME)
-        .then((cache) => cache.match(event.request.url))
-        .then(async (res) => {
-          if (res) { return res.arrayBuffer() }
+      caches.open(CURRENT_CACHES.prefetch)
+      .then(function(cache) {
+        return cache.match(event.request.url);
+      }).then(function(res) {
+        if (!res) {
           return fetch(event.request)
-            .then((res) => res.arrayBuffer())
-            .catch((error) => {
-              // 404 error responses will NOT trigger an exception.
-              console.error('Fetching failed:', error)
-              throw error
-            })
-        })
-        .then((ab) => {
-          return new Response(
-            ab.slice(startingPosition),
-            {
-              status: PARTIAL_CONTENT,
-              statusText: "Partial Content",
-              headers: [
-                [
-                  "Content-Range", "bytes " + startingPosition + "-" +
-                  (ab.byteLength - 1) + "/" + ab.byteLength
-                ]
-              ]
-            }
-          )
-        })
-    )
+          .then(res => {
+            return res.arrayBuffer();
+          });
+        }
+        return res.arrayBuffer();
+      }).then(function(ab) {
+        return new Response(
+          ab.slice(pos),
+          {
+            status: PARTIAL_CONTENT,
+            statusText: 'Partial Content',
+            headers: [
+              // ['Content-Type', 'video/webm'],
+              ['Content-Range', 'bytes ' + pos + '-' +
+                (ab.byteLength - 1) + '/' + ab.byteLength]]
+          });
+      }));
   } else {
-    console.log("Non-range request for", event.request.url)
-
+    console.log('Non-range request for', event.request.url);
     event.respondWith(
-      caches.open(CACHE_NAME)
-        .then((cache) => cache.match(event.request.url))
-        .then((response) => {
-          if (response) {
-            console.log("Found response in cache:", response)
-            return response
-          }
+    // caches.match() will look for a cache entry in all of the caches available to the service worker.
+    // It's an alternative to first opening a specific named cache and then matching on that.
+    caches.match(event.request).then(function(response) {
+      if (response) {
+        console.log('Found response in cache:', response);
+        return response;
+      }
+      console.log('No response found in cache. About to fetch from network...');
+      // event.request will always have the proper mode set ('cors, 'no-cors', etc.) so we don't
+      // have to hardcode 'no-cors' like we do when fetch()ing in the install handler.
+      return fetch(event.request).then(function(response) {
+        console.log('Response from network is:', response);
 
-          console.log(
-            "No response found in cache. About to fetch from network..."
-          )
+        return response;
+      }).catch(function(error) {
+        // This catch() will handle exceptions thrown from the fetch() operation.
+        // Note that a HTTP error response (e.g. 404) will NOT trigger an exception.
+        // It will return a normal response object that has the appropriate error code set.
+        console.error('Fetching failed:', error);
 
-          return fetch(event.request).then((response) => {
-            console.log("Response from network is:", response)
-
-            return response
-          })
-            .catch((error) => {
-              // 404 error responses will NOT trigger an exception.
-              console.error("Fetching failed:", error)
-              throw error
-            })
-        })
-    )
+        throw error;
+      });
+    })
+    );
   }
 }
 
