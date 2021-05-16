@@ -68,9 +68,6 @@ function deleteExpiredCache(event) {
 
 // https://samdutton.github.io/samples/service-worker/prefetch-video/
 function fromCacheElseFetch(event) {
-  // only handle "GET" requests
-  if (event.request.method !== "GET") { return }
-
   console.log("Handling fetch event for", event.request.url)
 
   // Browsers default to requesting media like MP3 and MP4 in chunks so that
