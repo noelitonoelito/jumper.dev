@@ -231,20 +231,20 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     _initializeSounds() {
-      this.music = new Audio("/jumper.dev/sounds/background-music.mp3")
+      this.music = new Audio("sounds/background-music.mp3")
       this.music.volume = musicVolume * mainVolume
       this.music.addEventListener("ended", () => {
         this.music.currentTime = 0
         this.music.play()
       }, false)
 
-      this.gameOverSound = new Audio("/jumper.dev/sounds/game-over.mp3")
+      this.gameOverSound = new Audio("sounds/game-over.mp3")
       this.gameOverSound.volume = gameOverSoundVolume * mainVolume
       this.gameOverSound.addEventListener("ended", () => {
         this.gameOverSound.currentTime = 0
       }, false)
 
-      this.menuSound = new Audio("/jumper.dev/sounds/click.mp3")
+      this.menuSound = new Audio("sounds/click.mp3")
       this.menuSound.volume = menuSoundVolume * mainVolume
       this.menuSound.addEventListener("ended", () => {
         this.menuSound.currentTime = 0
@@ -570,7 +570,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     _initializeSounds() {
       [1, 2, 3, 4].forEach((i) => {
-        const sound = new Audio(`/jumper.dev/sounds/jump-${i}.mp3`)
+        const sound = new Audio(`sounds/jump-${i}.mp3`)
         sound.volume = jumpSoundVolume * mainVolume
         this.jumpSounds.push(sound)
       })
